@@ -1,4 +1,4 @@
-package moxie
+package mox
 
 const mockTemplate = `package {{ .Package }}
 

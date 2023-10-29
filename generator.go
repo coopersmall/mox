@@ -1,4 +1,4 @@
-package moxie
+package mox
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 )
 
 type generator interface {
-	generateCode(objects ...object)
+	generateCode([]spec)
 }
 
 type generatorImpl struct {
@@ -21,8 +21,8 @@ func newGenerator() generator {
 	}
 }
 
-func (g *generatorImpl) generateCode(objects ...object) {
-	for _, obj := range objects {
+func (g *generatorImpl) generateCode(specs []spec) {
+	for _, obj := range specs {
 		var s strings.Builder
 		if err := g.template.Execute(&s, obj); err != nil {
 			fmt.Printf("Error generating mock code for %s: %v\n", obj.Name, err)

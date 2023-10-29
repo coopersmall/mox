@@ -1,4 +1,4 @@
-NAME = moxie
+NAME = mox
 CMD = cmd/$(NAME)/main.go
 BIN = bin/$(NAME)
 TARGET = /usr/local/bin/$(NAME)

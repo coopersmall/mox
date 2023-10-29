@@ -1,6 +1,6 @@
-package moxie
+package mox
 
-type object struct {
+type spec struct {
 	Package string
 	Imports []string
 	Name    string

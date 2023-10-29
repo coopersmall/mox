@@ -1,4 +1,4 @@
-package moxie
+package mox
 
 import (
 	"fmt"
@@ -9,25 +9,50 @@ import (
 	"strings"
 )
 
+const (
+	version = "0.1.0"
+	help    = `
+Moxie is a tool for generating mock implementations of Go interfaces.
+    Usage: moxie [file]...
+    Flags:
+        -h, --help      Show this help message
+        -v, --version   Show the version of moxie`
+)
+
 // Run runs the moxie generator.
 func Run() {
+	args := args()
 	generator := newGenerator()
 
-	files := getFiles(args()...)
+	files := getFiles(args)
 	for _, file := range files {
-		generator.generateCode(getObjects(file)...)
+		generator.generateCode(getSpecs(file))
 	}
 }
 
 func args() []string {
-	return os.Args[1:]
-}
+	args := os.Args[1:]
 
-func getFiles(args ...string) []string {
-	if len(args) >= 1 {
-		return args
+	for _, arg := range args {
+		switch arg {
+		case "-h", "--help":
+			fmt.Println(help)
+			os.Exit(0)
+		case "-v", "--version":
+			fmt.Println(fmt.Sprintf("moxie version %s", version))
+			os.Exit(0)
+		default:
+			if !strings.HasPrefix(arg, ".go") {
+				fmt.Printf("Error: only .go files are supported, got %s\n", arg)
+				os.Exit(1)
+			}
+		}
 	}
 
+	return args
+}
+
+func getFiles(args []string) []string {
 	files := make([]string, 0)
 
 	dir, err := os.Getwd()
@@ -51,7 +76,7 @@ func getFiles(args ...string) []string {
 	return files
 }
 
-func getObjects(filename string) []object {
+func getSpecs(filename string) []spec {
 	// Parse the source file
 	fset := token.NewFileSet()
 	node, err := parser.ParseFile(fset, filename, nil, parser.ParseComments)
@@ -70,7 +95,7 @@ func getObjects(filename string) []object {
 	}
 
 	// Create a map to store interfaces and structs
-	objects := make([]object, 0)
+	specs := make([]spec, 0)
 
 	// Inspect type declarations and identify interfaces and structs
 	for _, decl := range node.Decls {
@@ -80,8 +105,8 @@ func getObjects(filename string) []object {
 		}
 
 		// Inspect type specs and identify interfaces
-		for _, spec := range genDecl.Specs {
-			typeSpec, ok := spec.(*ast.TypeSpec)
+		for _, s := range genDecl.Specs {
+			typeSpec, ok := s.(*ast.TypeSpec)
 			if !ok {
 				continue
 			}
@@ -90,35 +115,35 @@ func getObjects(filename string) []object {
 				continue
 			}
 
-			obj := object{
+			spec := spec{
 				Package: packageName,
 				Imports: imports,
 				Name:    typeSpec.Name.Name,
-				Methods: getMethods(typeSpec.Type.(*ast.InterfaceType).Methods.List),
+				Methods: specMethods(typeSpec.Type.(*ast.InterfaceType).Methods.List),
 			}
 
-			objects = append(objects, obj)
+			specs = append(specs, spec)
 		}
 
 	}
-	return objects
+	return specs
 }
 
-func getMethods(methods []*ast.Field) []method {
+func specMethods(methods []*ast.Field) []method {
 	methodsList := make([]method, 0)
 
 	for _, m := range methods {
 		methodsList = append(methodsList, method{
 			Name:    m.Names[0].Name,
-			Params:  getParams(m.Type.(*ast.FuncType).Params.List),
-			Returns: getReturns(m.Type.(*ast.FuncType).Results.List),
+			Params:  specMethodParams(m.Type.(*ast.FuncType).Params.List),
+			Returns: specMethodReturns(m.Type.(*ast.FuncType).Results.List),
 		})
 	}
 
 	return methodsList
 }
 
-func getParams(params []*ast.Field) []param {
+func specMethodParams(params []*ast.Field) []param {
 	paramsList := make([]param, 0)
 
 	for _, p := range params {
@@ -133,7 +158,7 @@ func getParams(params []*ast.Field) []param {
 	return paramsList
 }
 
-func getReturns(results []*ast.Field) []ret {
+func specMethodReturns(results []*ast.Field) []ret {
 	returns := make([]ret, 0)
 
 	for _, r := range results {

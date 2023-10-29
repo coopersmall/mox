@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/coopersmall/moxie"
+	"github.com/coopersmall/mox"
 )
 
 func main() {
-	moxie.Run()
+	mox.Run()
 }
