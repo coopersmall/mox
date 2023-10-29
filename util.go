@@ -12,8 +12,8 @@ import (
 const (
 	version = "0.1.0"
 	help    = `
-Moxie is a tool for generating mock implementations of Go interfaces.
-    Usage: moxie [file]...
+Mox is a tool for generating mock implementations of Go interfaces.
+    Usage: mox [file]...
     Flags:
         -h, --help      Show this help message
         -v, --version   Show the version of moxie`
